@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ViewType, Profile, AppTool, News } from './types';
 import Header from './components/Header';
@@ -10,7 +9,7 @@ import Admin from './pages/Admin';
 import { supabase } from './supabaseClient';
 
 const INITIAL_PROFILE: Profile = {
-  id: '1',
+  id: '00000000-0000-0000-0000-000000000000',
   name: 'Team Soluções',
   bio: 'Carregando informações...',
   avatar_url: 'https://picsum.photos/200/200'
@@ -23,18 +22,14 @@ const App: React.FC = () => {
   const [tools, setTools] = useState<AppTool[]>([]);
   const [news, setNews] = useState<News[]>([]);
 
-  // Buscar dados reais do Supabase
   const fetchData = async () => {
     try {
-      // Buscar Perfil
       const { data: profileData } = await supabase.from('profiles').select('*').single();
       if (profileData) setProfile(profileData);
 
-      // Buscar Ferramentas
       const { data: toolsData } = await supabase.from('tools').select('*').order('created_at', { ascending: false });
       if (toolsData) setTools(toolsData);
 
-      // Buscar Notícias
       const { data: newsData } = await supabase.from('news').select('*').order('created_at', { ascending: false });
       if (newsData) setNews(newsData);
     } catch (error) {
