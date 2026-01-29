@@ -1,5 +1,4 @@
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from '@supabase/supabase-js';
 
 // Substitua pelos seus dados do painel Supabase (Settings > API)
 const supabaseUrl = 'https://yqsygtsixbozkzzrxuez.supabase.co';
