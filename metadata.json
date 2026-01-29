@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Team Soluções - App Store",
+  "description": "Uma vitrine personalizada para divulgação de ferramentas, aplicativos APK e notícias da marca Team Soluções.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

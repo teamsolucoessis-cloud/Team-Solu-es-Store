@@ -1,0 +1,111 @@
+
+import React from 'react';
+import { Profile, AppTool, News } from '../types';
+
+interface HomeProps {
+  profile: Profile;
+  tools: AppTool[];
+  news: News[];
+}
+
+const Home: React.FC<HomeProps> = ({ profile, tools, news }) => {
+  return (
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Profile Section */}
+      <section className="text-center py-8">
+        <div className="relative inline-block">
+          <img 
+            src={profile.avatar_url || 'https://picsum.photos/200/200'} 
+            alt={profile.name}
+            className="w-32 h-32 rounded-full border-4 border-indigo-600 object-cover mx-auto mb-4 shadow-xl shadow-indigo-500/20"
+          />
+        </div>
+        <h1 className="text-3xl font-extrabold text-white mb-2">{profile.name}</h1>
+        <p className="text-slate-400 max-w-md mx-auto leading-relaxed">{profile.bio}</p>
+      </section>
+
+      {/* News Section */}
+      {news.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-6">
+            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+            <h2 className="text-xl font-bold">Novidades</h2>
+          </div>
+          <div className="grid gap-4">
+            {news.map(item => (
+              <div key={item.id} className="glass-morphism rounded-2xl p-4 flex gap-4 items-center">
+                {item.image_url && (
+                  <img src={item.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                )}
+                <div>
+                  <h3 className="font-bold text-lg mb-1">{item.title}</h3>
+                  <p className="text-slate-400 text-sm line-clamp-2">{item.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Tools Section */}
+      <section>
+        <h2 className="text-xl font-bold mb-6">Ferramentas & Aplicativos</h2>
+        <div className="grid gap-6">
+          {tools.length === 0 ? (
+            <div className="text-center py-12 glass-morphism rounded-3xl border-dashed border-2 border-white/10">
+              <p className="text-slate-500">Nenhuma ferramenta cadastrada ainda.</p>
+            </div>
+          ) : (
+            tools.map(tool => (
+              <div key={tool.id} className="glass-morphism rounded-3xl p-6 hover:border-white/20 transition-all duration-300 group">
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <img 
+                    src={tool.icon_url || 'https://picsum.photos/80/80'} 
+                    alt={tool.title} 
+                    className="w-20 h-20 rounded-2xl shadow-lg bg-slate-800 p-1"
+                  />
+                  <div className="flex-grow">
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-indigo-400 transition-colors">{tool.title}</h3>
+                    <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                      {tool.description}
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {tool.apk_url && (
+                        <a 
+                          href={tool.apk_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Baixar APK
+                        </a>
+                      )}
+                      {tool.pwa_url && (
+                        <a 
+                          href={tool.pwa_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                          Abrir PWA
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;
