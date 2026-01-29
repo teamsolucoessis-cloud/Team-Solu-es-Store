@@ -3,10 +3,10 @@ import React from 'react';
 
 interface HeaderProps {
   onMenuClick: () => void;
-  onAdminClick: () => void;
+  onAdminClick: () => void; // Mantido na interface para não quebrar o App.tsx, mas não usado aqui
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick, onAdminClick }) => {
+const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-40 px-4 flex items-center justify-between">
       <button 
@@ -30,15 +30,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, onAdminClick }) => {
         <span className="font-bold text-lg tracking-tight">Team Soluções</span>
       </div>
 
-      <button 
-        onClick={onAdminClick}
-        className="p-2 text-slate-400 hover:text-white transition-colors"
-        title="Área Administrativa"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-      </button>
+      {/* Espaçador para manter o logo centralizado */}
+      <div className="w-10"></div>
     </header>
   );
 };
