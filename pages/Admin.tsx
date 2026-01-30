@@ -411,7 +411,7 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
                       </div>
                     </div>
                   ) : (
-                    <div className="text-sm text-slate-400 line-clamp-2 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="text-sm text-slate-400 bg-white/5 p-4 rounded-2xl border border-white/5 whitespace-pre-wrap">
                       {item.content || 'Sem conteúdo.'}
                     </div>
                   )}

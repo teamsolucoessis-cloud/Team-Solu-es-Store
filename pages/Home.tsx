@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Profile, AppTool, News } from '../types';
 
@@ -33,13 +32,15 @@ const Home: React.FC<HomeProps> = ({ profile, tools, news }) => {
           </div>
           <div className="grid gap-4">
             {news.map(item => (
-              <div key={item.id} className="glass-morphism rounded-2xl p-4 flex gap-4 items-center">
+              <div key={item.id} className="glass-morphism rounded-2xl p-5 flex gap-4 items-start">
                 {item.image_url && (
-                  <img src={item.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                  <img src={item.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0 shadow-lg border border-white/5" />
                 )}
-                <div>
-                  <h3 className="font-bold text-lg mb-1">{item.title}</h3>
-                  <p className="text-slate-400 text-sm line-clamp-2">{item.content}</p>
+                <div className="flex-grow">
+                  <h3 className="font-bold text-lg mb-2 text-white">{item.title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
+                    {item.content}
+                  </p>
                 </div>
               </div>
             ))}
