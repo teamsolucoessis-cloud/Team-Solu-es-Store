@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Profile, AppTool, News } from '../types';
 import { supabase } from '../supabaseClient';
@@ -21,6 +20,9 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
   const [activeTab, setActiveTab] = useState<'PROFILE' | 'TOOLS' | 'NEWS'>('PROFILE');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  
+  const [editingToolId, setEditingToolId] = useState<string | null>(null);
+  const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -57,7 +59,6 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
     onBack();
   };
 
-  // Função Mágica para Upload
   const uploadFile = async (event: React.ChangeEvent<HTMLInputElement>, folder: string) => {
     try {
       if (!event.target.files || event.target.files.length === 0) return;
@@ -68,16 +69,13 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${folder}/${fileName}`;
 
-      // 1. Sobe o arquivo para o bucket 'media'
       const { error: uploadError } = await supabase.storage
         .from('media')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // 2. Pega o link público dele
       const { data } = supabase.storage.from('media').getPublicUrl(filePath);
-      
       return data.publicUrl;
     } catch (error: any) {
       alert('Erro no upload: ' + error.message);
@@ -98,13 +96,16 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
   const addTool = async () => {
     const newTool = {
       title: 'Nova Ferramenta',
-      description: 'Clique para editar a descrição',
+      description: 'Descrição da nova ferramenta',
       icon_url: 'https://img.icons8.com/fluency/100/000000/layers.png',
       apk_url: '',
       pwa_url: ''
     };
     const { data, error } = await supabase.from('tools').insert(newTool).select().single();
-    if (data) setTools([data, ...tools]);
+    if (data) {
+      setTools([data, ...tools]);
+      setEditingToolId(data.id);
+    }
     if (error) alert('Erro ao criar: ' + error.message);
   };
 
@@ -121,7 +122,10 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
       image_url: ''
     };
     const { data, error } = await supabase.from('news').insert(newItem).select().single();
-    if (data) setNews([data, ...news]);
+    if (data) {
+      setNews([data, ...news]);
+      setEditingNewsId(data.id);
+    }
     if (error) alert('Erro ao criar: ' + error.message);
   };
 
@@ -131,16 +135,28 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
     if (!error) setNews(news.filter(n => n.id !== id));
   };
 
-  const updateTool = async (idx: number) => {
+  const saveToolChanges = async (idx: number) => {
+    setLoading(true);
     const tool = tools[idx];
     const { error } = await supabase.from('tools').update(tool).eq('id', tool.id);
-    if (error) console.error('Erro ao salvar alteração');
+    if (error) {
+      alert('Erro ao salvar: ' + error.message);
+    } else {
+      setEditingToolId(null);
+    }
+    setLoading(false);
   };
 
-  const updateNews = async (idx: number) => {
+  const saveNewsChanges = async (idx: number) => {
+    setLoading(true);
     const item = news[idx];
     const { error } = await supabase.from('news').update(item).eq('id', item.id);
-    if (error) console.error('Erro ao salvar alteração');
+    if (error) {
+      alert('Erro ao salvar: ' + error.message);
+    } else {
+      setEditingNewsId(null);
+    }
+    setLoading(false);
   };
 
   if (!isLoggedIn) {
@@ -173,17 +189,23 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">Painel Administrativo</h1>
-          <p className="text-slate-500 text-sm italic">Você está logado como administrador.</p>
+          <p className="text-slate-500 text-sm italic">Gestão da Vitrine Team Soluções</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={addTool} className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-indigo-600/20">+ Ferramenta</button>
-          <button onClick={addNews} className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-emerald-600/20">+ Notícia</button>
+          <button onClick={addTool} className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-indigo-600/20 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+            Ferramenta
+          </button>
+          <button onClick={addNews} className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-emerald-600/20 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+            Notícia
+          </button>
         </div>
       </div>
 
       <div className="flex gap-4 mb-8 border-b border-white/10 overflow-x-auto scrollbar-hide">
         {(['PROFILE', 'TOOLS', 'NEWS'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-4 px-2 font-bold transition-all relative ${activeTab === tab ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}>
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-4 px-2 font-bold transition-all relative whitespace-nowrap ${activeTab === tab ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}>
             {tab === 'PROFILE' ? 'Meu Perfil' : tab === 'TOOLS' ? 'Ferramentas' : 'Notícias'}
             {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-400 rounded-full"></div>}
           </button>
@@ -200,18 +222,15 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase ml-1">Foto de Perfil</label>
-                <div className="flex gap-2">
-                  <div className="flex-grow">
-                     <input type="text" readOnly value={profile.avatar_url} className="w-full bg-slate-900/50 border border-white/10 rounded-xl p-3 text-xs text-slate-400 opacity-50 mb-2" />
-                     <label className="cursor-pointer block bg-slate-800 hover:bg-slate-700 p-2 text-center rounded-lg text-sm transition-all border border-dashed border-white/20">
-                        {uploading === 'avatar' ? 'Enviando...' : '📷 Escolher Foto'}
-                        <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                          const url = await uploadFile(e, 'avatar');
-                          if (url) setProfile({...profile, avatar_url: url});
-                        }} />
-                     </label>
-                  </div>
-                  <img src={profile.avatar_url} className="w-20 h-20 rounded-full object-cover border-2 border-indigo-600/50" alt="Preview" />
+                <div className="flex gap-4 items-center">
+                  <img src={profile.avatar_url} className="w-16 h-16 rounded-full object-cover border-2 border-indigo-600/50 shrink-0" alt="Preview" />
+                  <label className="flex-grow cursor-pointer block bg-slate-800 hover:bg-slate-700 p-2.5 text-center rounded-xl text-sm transition-all border border-dashed border-white/20">
+                    {uploading === 'avatar' ? 'Enviando...' : '📷 Alterar Foto'}
+                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                      const url = await uploadFile(e, 'avatar');
+                      if (url) setProfile({...profile, avatar_url: url});
+                    }} />
+                  </label>
                 </div>
               </div>
               <div className="space-y-1 md:col-span-2">
@@ -219,84 +238,192 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
                 <textarea placeholder="Fale sobre sua marca..." value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl p-3 h-28 text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none" />
               </div>
             </div>
-            <button onClick={saveProfile} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/10 transition-all">
-              {loading ? 'Salvando...' : 'Atualizar Identidade do Site'}
+            <button onClick={saveProfile} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/10 transition-all active:scale-95">
+              {loading ? 'Salvando...' : 'Salvar Perfil'}
             </button>
           </div>
         )}
 
         {activeTab === 'TOOLS' && (
           <div className="grid gap-6">
-            {tools.map((tool, idx) => (
-              <div key={tool.id} className="glass-morphism p-6 rounded-3xl border border-white/5 space-y-4">
-                <div className="flex justify-between items-center">
-                   <div className="flex items-center gap-3">
-                      <img src={tool.icon_url} className="w-10 h-10 rounded-lg object-cover" alt="icon" />
-                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-400/10 px-2 py-1 rounded">App #{idx + 1}</span>
-                   </div>
-                  <button onClick={() => deleteTool(tool.id)} className="text-red-400 hover:text-red-300 text-xs flex items-center gap-1">Excluir</button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input placeholder="Título" value={tool.title} onBlur={() => updateTool(idx)} onChange={e => { const n = [...tools]; n[idx].title = e.target.value; setTools(n); }} className="bg-slate-900/50 border border-white/10 rounded-xl p-3" />
-                  
-                  <div className="space-y-1">
-                    <label className="cursor-pointer block bg-slate-800 hover:bg-slate-700 p-2.5 text-center rounded-xl text-xs transition-all border border-dashed border-white/20">
-                      {uploading === `icon-${idx}` ? 'Subindo...' : '🖼️ Trocar Ícone'}
-                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                        const url = await uploadFile(e, `icons`);
-                        if (url) {
-                          const n = [...tools];
-                          n[idx].icon_url = url;
-                          setTools(n);
-                          updateTool(idx);
-                        }
-                      }} />
-                    </label>
+            {tools.map((tool, idx) => {
+              const isEditing = editingToolId === tool.id;
+              return (
+                <div key={tool.id} className={`glass-morphism p-6 rounded-3xl border transition-all ${isEditing ? 'border-indigo-500/50 ring-1 ring-indigo-500/20 bg-slate-900/40' : 'border-white/5'}`}>
+                  <div className="flex justify-between items-start mb-6">
+                     <div className="flex items-center gap-3">
+                        <img src={tool.icon_url} className="w-12 h-12 rounded-xl object-cover shadow-lg" alt="icon" />
+                        <div>
+                          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-400/10 px-2 py-1 rounded">App #{tools.length - idx}</span>
+                          <h3 className="font-bold text-white block">{tool.title}</h3>
+                        </div>
+                     </div>
+                    <div className="flex gap-2">
+                      {!isEditing && (
+                        <button onClick={() => setEditingToolId(tool.id)} className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          Editar
+                        </button>
+                      )}
+                      <button onClick={() => deleteTool(tool.id)} className="text-red-400/60 hover:text-red-400 p-1.5 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
                   </div>
 
-                  <textarea placeholder="Descrição" value={tool.description} onBlur={() => updateTool(idx)} onChange={e => { const n = [...tools]; n[idx].description = e.target.value; setTools(n); }} className="md:col-span-2 bg-slate-900/50 border border-white/10 rounded-xl p-3 h-20 resize-none" />
-                  <input placeholder="Link APK" value={tool.apk_url} onBlur={() => updateTool(idx)} onChange={e => { const n = [...tools]; n[idx].apk_url = e.target.value; setTools(n); }} className="bg-slate-900/50 border border-white/10 rounded-xl p-3" />
-                  <input placeholder="Link PWA" value={tool.pwa_url} onBlur={() => updateTool(idx)} onChange={e => { const n = [...tools]; n[idx].pwa_url = e.target.value; setTools(n); }} className="bg-slate-900/50 border border-white/10 rounded-xl p-3" />
+                  {isEditing ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Título</label>
+                        <input value={tool.title} onChange={e => { const n = [...tools]; n[idx].title = e.target.value; setTools(n); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Ícone</label>
+                        <label className="cursor-pointer block bg-slate-950 hover:bg-slate-900 p-2.5 text-center rounded-xl text-xs transition-all border border-dashed border-white/20">
+                          {uploading === `icon-${tool.id}` ? 'Subindo...' : '🖼️ Trocar Imagem'}
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const url = await uploadFile(e, `icons`);
+                            if (url) {
+                              const n = [...tools];
+                              n[idx].icon_url = url;
+                              setTools(n);
+                            }
+                          }} />
+                        </label>
+                      </div>
+
+                      <div className="md:col-span-2 space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Descrição</label>
+                        <textarea value={tool.description} onChange={e => { const n = [...tools]; n[idx].description = e.target.value; setTools(n); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 h-24 resize-none focus:ring-2 focus:ring-indigo-500 outline-none" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Link APK (Download)</label>
+                        <div className="flex gap-2">
+                           <input value={tool.apk_url} onChange={e => { const n = [...tools]; n[idx].apk_url = e.target.value; setTools(n); }} className="flex-grow bg-slate-950 border border-white/10 rounded-xl p-3 text-xs" />
+                           <label className="cursor-pointer bg-slate-800 hover:bg-slate-700 px-4 flex items-center rounded-xl text-xs border border-white/10 transition-all shrink-0">
+                              {uploading === `apk-${tool.id}` ? '...' : '📤 Upload'}
+                              <input type="file" accept=".apk" className="hidden" onChange={async (e) => {
+                                const url = await uploadFile(e, `apks`);
+                                if (url) {
+                                  const n = [...tools];
+                                  n[idx].apk_url = url;
+                                  setTools(n);
+                                }
+                              }} />
+                           </label>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Link PWA (Site)</label>
+                        <input value={tool.pwa_url} onChange={e => { const n = [...tools]; n[idx].pwa_url = e.target.value; setTools(n); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-xs" />
+                      </div>
+
+                      <div className="md:col-span-2 flex gap-3 pt-2">
+                        <button onClick={() => saveToolChanges(idx)} disabled={loading} className="flex-grow bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+                          {loading ? 'Salvando...' : 'Salvar Alterações'}
+                        </button>
+                        <button onClick={() => setEditingToolId(null)} className="px-6 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl font-bold transition-all">
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-400 italic bg-white/5 p-4 rounded-2xl border border-white/5">
+                      {tool.description || 'Nenhuma descrição definida.'}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
         {activeTab === 'NEWS' && (
           <div className="grid gap-6">
-            {news.map((item, idx) => (
-              <div key={item.id} className="glass-morphism p-6 rounded-3xl border border-white/5 space-y-4">
-                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-2 py-1 rounded">Notícia #{idx + 1}</span>
-                  <button onClick={() => deleteNews(item.id)} className="text-red-400 hover:text-red-300 text-xs flex items-center gap-1">Excluir</button>
+            {news.map((item, idx) => {
+              const isEditing = editingNewsId === item.id;
+              return (
+                <div key={item.id} className={`glass-morphism p-6 rounded-3xl border transition-all ${isEditing ? 'border-emerald-500/50 ring-1 ring-emerald-500/20 bg-slate-900/40' : 'border-white/5'}`}>
+                   <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-3">
+                      {item.image_url ? (
+                        <img src={item.image_url} className="w-12 h-12 rounded-xl object-cover shadow-lg" alt="news" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-2 py-1 rounded">Notícia #{news.length - idx}</span>
+                        <h3 className="font-bold text-white block">{item.title}</h3>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {!isEditing && (
+                        <button onClick={() => setEditingNewsId(item.id)} className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          Editar
+                        </button>
+                      )}
+                      <button onClick={() => deleteNews(item.id)} className="text-red-400/60 hover:text-red-400 p-1.5 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {isEditing ? (
+                    <div className="space-y-4 animate-in fade-in duration-300">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Título do Comunicado</label>
+                        <input placeholder="Título" value={item.title} onChange={e => { const n = [...news]; n[idx].title = e.target.value; setNews(n); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none" />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Conteúdo</label>
+                        <textarea placeholder="Texto" value={item.content} onChange={e => { const n = [...news]; n[idx].content = e.target.value; setNews(n); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 h-32 resize-none focus:ring-2 focus:ring-emerald-500 outline-none" />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Imagem da Notícia</label>
+                        <label className="cursor-pointer block bg-slate-950 hover:bg-slate-900 p-3 text-center rounded-xl text-xs transition-all border border-dashed border-white/20">
+                          {uploading === `news-${item.id}` ? 'Subindo...' : '📸 Carregar Nova Imagem'}
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const url = await uploadFile(e, `news`);
+                            if (url) {
+                              const n = [...news];
+                              n[idx].image_url = url;
+                              setNews(n);
+                            }
+                          }} />
+                        </label>
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <button onClick={() => saveNewsChanges(idx)} disabled={loading} className="flex-grow bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
+                          {loading ? 'Salvando...' : 'Salvar Notícia'}
+                        </button>
+                        <button onClick={() => setEditingNewsId(null)} className="px-6 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl font-bold transition-all">
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-400 line-clamp-2 bg-white/5 p-4 rounded-2xl border border-white/5">
+                      {item.content || 'Sem conteúdo.'}
+                    </div>
+                  )}
                 </div>
-                <input placeholder="Título" value={item.title} onBlur={() => updateNews(idx)} onChange={e => { const n = [...news]; n[idx].title = e.target.value; setNews(n); }} className="w-full bg-slate-900/50 border border-white/10 rounded-xl p-3" />
-                <textarea placeholder="Texto" value={item.content} onBlur={() => updateNews(idx)} onChange={e => { const n = [...news]; n[idx].content = e.target.value; setNews(n); }} className="w-full bg-slate-900/50 border border-white/10 rounded-xl p-3 h-24 resize-none" />
-                
-                <div className="flex items-center gap-4">
-                  <label className="cursor-pointer flex-grow bg-slate-800 hover:bg-slate-700 p-3 text-center rounded-xl text-xs transition-all border border-dashed border-white/20">
-                    {uploading === `news-${idx}` ? 'Subindo...' : '📸 Adicionar Imagem à Notícia'}
-                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                      const url = await uploadFile(e, `news`);
-                      if (url) {
-                        const n = [...news];
-                        n[idx].image_url = url;
-                        setNews(n);
-                        updateNews(idx);
-                      }
-                    }} />
-                  </label>
-                  {item.image_url && <img src={item.image_url} className="w-16 h-16 rounded-lg object-cover" alt="News" />}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
       <div className="mt-12 mb-20 flex gap-4">
-        <button onClick={onBack} className="flex-1 bg-white/5 hover:bg-white/10 py-4 rounded-2xl font-bold transition-all border border-white/5">Sair do Painel</button>
+        <button onClick={onBack} className="flex-1 bg-white/5 hover:bg-white/10 py-4 rounded-2xl font-bold transition-all border border-white/5">Voltar ao Início</button>
         <button onClick={handleLogout} className="px-8 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-4 rounded-2xl font-bold transition-all border border-red-500/20">Encerrar Sessão</button>
       </div>
     </div>
