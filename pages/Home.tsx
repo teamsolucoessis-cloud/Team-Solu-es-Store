@@ -1,13 +1,16 @@
 import React from 'react';
-import { Profile, AppTool, News } from '../types';
+import { Profile, AppTool, News, ViewType } from '../types';
 
 interface HomeProps {
   profile: Profile;
   tools: AppTool[];
   news: News[];
+  onNavigate: (view: ViewType) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ profile, tools, news }) => {
+const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate }) => {
+  const latestNews = news.length > 0 ? news[0] : null;
+
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Profile Section */}
@@ -23,27 +26,39 @@ const Home: React.FC<HomeProps> = ({ profile, tools, news }) => {
         <p className="text-slate-400 max-w-md mx-auto leading-relaxed">{profile.bio}</p>
       </section>
 
-      {/* News Section */}
-      {news.length > 0 && (
+      {/* Latest News Section */}
+      {latestNews && (
         <section>
-          <div className="flex items-center gap-2 mb-6">
-            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
-            <h2 className="text-xl font-bold">Novidades</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+              <h2 className="text-xl font-bold">Última Novidade</h2>
+            </div>
+            {news.length > 1 && (
+              <button 
+                onClick={() => onNavigate('NEWS_LIST')}
+                className="text-indigo-400 text-sm font-bold hover:text-indigo-300 transition-colors flex items-center gap-1"
+              >
+                Ver todas
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
           </div>
-          <div className="grid gap-4">
-            {news.map(item => (
-              <div key={item.id} className="glass-morphism rounded-2xl p-5 flex gap-4 items-start">
-                {item.image_url && (
-                  <img src={item.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0 shadow-lg border border-white/5" />
-                )}
-                <div className="flex-grow">
-                  <h3 className="font-bold text-lg mb-2 text-white">{item.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
-                    {item.content}
-                  </p>
-                </div>
+          <div className="glass-morphism rounded-2xl p-5 flex gap-4 items-start border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+            {latestNews.image_url && (
+              <img src={latestNews.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0 shadow-lg border border-white/5" />
+            )}
+            <div className="flex-grow">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-black bg-indigo-500 text-white px-1.5 py-0.5 rounded uppercase">Novo</span>
+                <h3 className="font-bold text-lg text-white">{latestNews.title}</h3>
               </div>
-            ))}
+              <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
+                {latestNews.content}
+              </p>
+            </div>
           </div>
         </section>
       )}

@@ -1,4 +1,3 @@
-
 export interface Profile {
   id: string;
   name: string;
@@ -24,4 +23,4 @@ export interface News {
   created_at: string;
 }
 
-export type ViewType = 'HOME' | 'PRIVACY' | 'ADMIN';
+export type ViewType = 'HOME' | 'PRIVACY' | 'ADMIN' | 'NEWS_LIST';

@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import Privacy from './pages/Privacy';
 import Admin from './pages/Admin';
+import NewsList from './pages/NewsList';
 import { supabase } from './supabaseClient';
 
 const INITIAL_PROFILE: Profile = {
@@ -63,7 +64,10 @@ const App: React.FC = () => {
 
       <main className="flex-grow pt-20 pb-12 px-4 max-w-4xl mx-auto w-full">
         {currentView === 'HOME' && (
-          <Home profile={profile} tools={tools} news={news} />
+          <Home profile={profile} tools={tools} news={news} onNavigate={navigateTo} />
+        )}
+        {currentView === 'NEWS_LIST' && (
+          <NewsList news={news} />
         )}
         {currentView === 'PRIVACY' && (
           <Privacy />
