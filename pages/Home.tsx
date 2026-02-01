@@ -11,18 +11,22 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate }) => {
   const latestNews = news.length > 0 ? news[0] : null;
 
+  // Verifica se existe uma URL de mascote válida
+  const hasMascot = profile.mascot_url && profile.mascot_url.trim().length > 0;
+
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Profile Section with Space Theme & Mascot */}
       <section className="text-center py-12 relative overflow-visible space-bg rounded-b-[4rem]">
         <div className="relative inline-block">
-          {/* Floating Mascot */}
-          {profile.mascot_url && (
-            <div className="absolute -top-12 -left-12 w-24 h-24 z-20 animate-mascot">
+          {/* Floating Mascot - Renderização Condicional Robusta */}
+          {hasMascot && (
+            <div className="absolute -top-16 -left-16 w-32 h-32 z-30 animate-mascot pointer-events-none">
               <img 
                 src={profile.mascot_url} 
-                alt="Mascote" 
-                className="w-full h-full object-contain"
+                alt="Mascote Team Soluções" 
+                className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
               />
             </div>
           )}
@@ -33,7 +37,7 @@ const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate }) => {
             <img 
               src={profile.avatar_url || 'https://picsum.photos/200/200'} 
               alt={profile.name}
-              className="w-32 h-32 rounded-full border-4 border-indigo-600 object-cover mx-auto mb-4 shadow-2xl relative z-10"
+              className="w-32 h-32 rounded-full border-4 border-indigo-600 object-cover mx-auto mb-4 shadow-2xl relative z-10 bg-slate-800"
             />
           </div>
         </div>
@@ -44,9 +48,10 @@ const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate }) => {
         </div>
 
         {/* Decorative Stars (CSS only) */}
-        <div className="absolute top-10 left-1/4 w-1 h-1 bg-white rounded-full opacity-20 animate-pulse"></div>
-        <div className="absolute top-20 right-1/4 w-1 h-1 bg-white rounded-full opacity-10 animate-pulse delay-700"></div>
-        <div className="absolute bottom-10 left-1/3 w-1.5 h-1.5 bg-indigo-400 rounded-full opacity-20 animate-pulse delay-1000"></div>
+        <div className="absolute top-10 left-1/4 w-1 h-1 bg-white rounded-full opacity-30 animate-pulse"></div>
+        <div className="absolute top-20 right-1/4 w-1 h-1 bg-white rounded-full opacity-20 animate-pulse delay-700"></div>
+        <div className="absolute bottom-10 left-1/3 w-1.5 h-1.5 bg-indigo-400 rounded-full opacity-30 animate-pulse delay-1000"></div>
+        <div className="absolute top-32 right-1/3 w-1 h-1 bg-white rounded-full opacity-10 animate-pulse delay-300"></div>
       </section>
 
       {/* Latest News Section */}
@@ -87,7 +92,7 @@ const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate }) => {
       )}
 
       {/* Tools Section */}
-      <section className="px-2">
+      <section className="px-2 pb-8">
         <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-indigo-500">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />

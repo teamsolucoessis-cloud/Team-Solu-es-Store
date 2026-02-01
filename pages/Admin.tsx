@@ -87,9 +87,13 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
 
   const saveProfile = async () => {
     setLoading(true);
+    // IMPORTANTE: O upsert envia o objeto 'profile' atual para o banco
     const { error } = await supabase.from('profiles').upsert(profile);
-    if (error) alert('Erro ao salvar: ' + error.message);
-    else alert('Perfil atualizado com sucesso!');
+    if (error) {
+      alert('Erro ao salvar no banco: ' + error.message + '\n\nVerifique se a coluna "mascot_url" existe na tabela "profiles".');
+    } else {
+      alert('Perfil e Mascote atualizados com sucesso no banco de dados!');
+    }
     setLoading(false);
   };
 
@@ -223,7 +227,7 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase ml-1">Foto de Perfil</label>
                 <div className="flex gap-4 items-center">
-                  <img src={profile.avatar_url} className="w-16 h-16 rounded-full object-cover border-2 border-indigo-600/50 shrink-0" alt="Preview" />
+                  <img src={profile.avatar_url} className="w-16 h-16 rounded-full object-cover border-2 border-indigo-600/50 shrink-0 bg-slate-800" alt="Preview" />
                   <label className="flex-grow cursor-pointer block bg-slate-800 hover:bg-slate-700 p-2.5 text-center rounded-xl text-sm transition-all border border-dashed border-white/20">
                     {uploading === 'avatar' ? 'Enviando...' : '📷 Alterar Foto'}
                     <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
@@ -235,16 +239,29 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
               </div>
               
               <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Mascote Animado</label>
-                <div className="flex gap-4 items-center">
-                   {profile.mascot_url && <img src={profile.mascot_url} className="w-16 h-16 object-contain bg-slate-800 rounded-xl p-2" alt="Mascote" />}
-                   <label className="flex-grow cursor-pointer block bg-slate-800 hover:bg-slate-700 p-3 text-center rounded-xl text-sm transition-all border border-dashed border-white/20">
-                      {uploading === 'mascot' ? 'Subindo...' : '🤖 Enviar Mascote (PNG Transparente)'}
-                      <input type="file" accept="image/png" className="hidden" onChange={async (e) => {
-                        const url = await uploadFile(e, 'mascot');
-                        if (url) setProfile({...profile, mascot_url: url});
-                      }} />
-                   </label>
+                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Mascote Animado (PNG)</label>
+                <div className="flex gap-4 items-center bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                   <div className="w-20 h-20 bg-slate-800 rounded-xl flex items-center justify-center p-2 relative overflow-hidden">
+                      {profile.mascot_url ? (
+                        <img src={profile.mascot_url} className="w-full h-full object-contain z-10" alt="Mascote" />
+                      ) : (
+                        <span className="text-slate-600 text-[10px] text-center">Sem mascote</span>
+                      )}
+                      <div className="absolute inset-0 opacity-10 space-bg"></div>
+                   </div>
+                   <div className="flex-grow space-y-2">
+                      <label className="cursor-pointer block bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 p-3 text-center rounded-xl text-sm font-bold transition-all border border-indigo-500/30">
+                        {uploading === 'mascot' ? '🔄 Enviando Arquivo...' : '🤖 Selecionar Robô (PNG)'}
+                        <input type="file" accept="image/png" className="hidden" onChange={async (e) => {
+                          const url = await uploadFile(e, 'mascot');
+                          if (url) {
+                            setProfile(prev => ({...prev, mascot_url: url}));
+                            alert("Arquivo carregado com sucesso! Lembre-se de clicar em 'Salvar Perfil' abaixo.");
+                          }
+                        }} />
+                      </label>
+                      <p className="text-[10px] text-slate-500 italic px-1 text-center">Para melhor efeito, use uma imagem PNG com fundo transparente.</p>
+                   </div>
                 </div>
               </div>
 
@@ -253,14 +270,15 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
                 <textarea placeholder="Fale sobre sua marca..." value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl p-3 h-28 text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none" />
               </div>
             </div>
-            <button onClick={saveProfile} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/10 transition-all active:scale-95">
-              {loading ? 'Salvando...' : 'Salvar Perfil'}
+            <button onClick={saveProfile} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-black shadow-lg shadow-indigo-600/20 transition-all active:scale-95 text-lg">
+              {loading ? 'Processando...' : '💾 SALVAR PERFIL COMPLETO'}
             </button>
           </div>
         )}
 
+        {/* ... (restante do código das abas TOOLS e NEWS mantido) ... */}
         {activeTab === 'TOOLS' && (
-          <div className="grid gap-6">
+           <div className="grid gap-6">
             {tools.map((tool, idx) => {
               const isEditing = editingToolId === tool.id;
               return (
@@ -318,7 +336,7 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
                         <div className="flex gap-2">
                            <input value={tool.apk_url} onChange={e => { const n = [...tools]; n[idx].apk_url = e.target.value; setTools(n); }} className="flex-grow bg-slate-950 border border-white/10 rounded-xl p-3 text-xs" />
                            <label className="cursor-pointer bg-slate-800 hover:bg-slate-700 px-4 flex items-center rounded-xl text-xs border border-white/10 transition-all shrink-0">
-                              {uploading === `apk-${tool.id}` ? '...' : '📤 Upload'}
+                              {uploading === `apks` ? '...' : '📤 Upload'}
                               <input type="file" accept=".apk" className="hidden" onChange={async (e) => {
                                 const url = await uploadFile(e, `apks`);
                                 if (url) {
@@ -357,7 +375,7 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
         )}
 
         {activeTab === 'NEWS' && (
-          <div className="grid gap-6">
+           <div className="grid gap-6">
             {news.map((item, idx) => {
               const isEditing = editingNewsId === item.id;
               return (
@@ -404,7 +422,7 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Imagem da Notícia</label>
                         <label className="cursor-pointer block bg-slate-950 hover:bg-slate-900 p-3 text-center rounded-xl text-xs transition-all border border-dashed border-white/20">
-                          {uploading === `news-${item.id}` ? 'Subindo...' : '📸 Carregar Nova Imagem'}
+                          {uploading === `news` ? 'Subindo...' : '📸 Carregar Nova Imagem'}
                           <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                             const url = await uploadFile(e, `news`);
                             if (url) {
