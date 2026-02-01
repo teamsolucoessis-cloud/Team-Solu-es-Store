@@ -233,6 +233,21 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
                   </label>
                 </div>
               </div>
+              
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Mascote Animado</label>
+                <div className="flex gap-4 items-center">
+                   {profile.mascot_url && <img src={profile.mascot_url} className="w-16 h-16 object-contain bg-slate-800 rounded-xl p-2" alt="Mascote" />}
+                   <label className="flex-grow cursor-pointer block bg-slate-800 hover:bg-slate-700 p-3 text-center rounded-xl text-sm transition-all border border-dashed border-white/20">
+                      {uploading === 'mascot' ? 'Subindo...' : '🤖 Enviar Mascote (PNG Transparente)'}
+                      <input type="file" accept="image/png" className="hidden" onChange={async (e) => {
+                        const url = await uploadFile(e, 'mascot');
+                        if (url) setProfile({...profile, mascot_url: url});
+                      }} />
+                   </label>
+                </div>
+              </div>
+
               <div className="space-y-1 md:col-span-2">
                 <label className="text-xs font-bold text-slate-500 uppercase ml-1">Slogan / Biografia</label>
                 <textarea placeholder="Fale sobre sua marca..." value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl p-3 h-28 text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none" />

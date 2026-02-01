@@ -3,6 +3,7 @@ export interface Profile {
   name: string;
   bio: string;
   avatar_url: string;
+  mascot_url?: string;
 }
 
 export interface AppTool {
