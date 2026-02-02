@@ -83,13 +83,15 @@ const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate, paginatio
               Ver todas
             </button>
           </div>
-          <div className="glass-morphism rounded-3xl p-6 flex gap-4 items-start border-indigo-500/10">
+          <div className="glass-morphism rounded-3xl p-6 flex flex-col sm:flex-row gap-6 items-start border-indigo-500/10">
             {latestNews.image_url && (
-              <img src={latestNews.image_url} alt="" className="w-16 h-16 rounded-2xl object-cover shrink-0 shadow-lg" />
+              <img src={latestNews.image_url} alt="" className="w-20 h-20 rounded-2xl object-cover shrink-0 shadow-lg" />
             )}
-            <div>
-              <h3 className="font-bold text-lg text-white mb-1">{latestNews.title}</h3>
-              <p className="text-slate-400 text-sm line-clamp-2">{latestNews.content}</p>
+            <div className="flex-grow">
+              <h3 className="font-bold text-lg text-white mb-2">{latestNews.title}</h3>
+              <p className="text-slate-400 text-sm whitespace-pre-wrap leading-relaxed">
+                {latestNews.content}
+              </p>
             </div>
           </div>
         </section>
@@ -116,7 +118,9 @@ const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate, paginatio
                   <img src={tool.icon_url} className="w-20 h-20 rounded-2xl shadow-lg bg-slate-800 p-1 shrink-0" alt={tool.title} />
                   <div className="flex-grow">
                     <h3 className="text-xl font-bold group-hover:text-indigo-400 transition-colors mb-2">{tool.title}</h3>
-                    <p className="text-slate-400 text-sm mb-6 leading-relaxed line-clamp-2">{tool.description}</p>
+                    <p className="text-slate-400 text-sm mb-6 leading-relaxed whitespace-pre-wrap">
+                      {tool.description}
+                    </p>
                     <div className="flex flex-wrap gap-3">
                       {tool.apk_url && (
                         <a 
