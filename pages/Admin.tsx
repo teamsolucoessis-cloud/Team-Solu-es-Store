@@ -87,10 +87,9 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
 
   const saveProfile = async () => {
     setLoading(true);
-    // IMPORTANTE: O upsert envia o objeto 'profile' atual para o banco
     const { error } = await supabase.from('profiles').upsert(profile);
     if (error) {
-      alert('Erro ao salvar no banco: ' + error.message + '\n\nVerifique se a coluna "mascot_url" existe na tabela "profiles".');
+      alert('Erro ao salvar no banco: ' + error.message);
     } else {
       alert('Perfil e Mascote atualizados com sucesso no banco de dados!');
     }
@@ -103,7 +102,8 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
       description: 'Descrição da nova ferramenta',
       icon_url: 'https://img.icons8.com/fluency/100/000000/layers.png',
       apk_url: '',
-      pwa_url: ''
+      pwa_url: '',
+      click_count: 0
     };
     const { data, error } = await supabase.from('tools').insert(newTool).select().single();
     if (data) {
@@ -276,7 +276,6 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
           </div>
         )}
 
-        {/* ... (restante do código das abas TOOLS e NEWS mantido) ... */}
         {activeTab === 'TOOLS' && (
            <div className="grid gap-6">
             {tools.map((tool, idx) => {
@@ -287,7 +286,13 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
                      <div className="flex items-center gap-3">
                         <img src={tool.icon_url} className="w-12 h-12 rounded-xl object-cover shadow-lg" alt="icon" />
                         <div>
-                          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-400/10 px-2 py-1 rounded">App #{tools.length - idx}</span>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-400/10 px-2 py-1 rounded">App #{tools.length - idx}</span>
+                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-2 py-1 rounded flex items-center gap-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                              {tool.click_count || 0} acessos
+                            </span>
+                          </div>
                           <h3 className="font-bold text-white block">{tool.title}</h3>
                         </div>
                      </div>

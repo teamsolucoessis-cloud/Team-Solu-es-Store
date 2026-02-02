@@ -13,6 +13,7 @@ export interface AppTool {
   icon_url: string;
   apk_url: string;
   pwa_url: string;
+  click_count: number;
   created_at: string;
 }
 

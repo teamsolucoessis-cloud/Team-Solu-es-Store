@@ -9,6 +9,8 @@ import Admin from './pages/Admin';
 import NewsList from './pages/NewsList';
 import { supabase } from './supabaseClient';
 
+const ITEMS_PER_PAGE = 6;
+
 const INITIAL_PROFILE: Profile = {
   id: '00000000-0000-0000-0000-000000000000',
   name: 'Team Soluções',
@@ -20,32 +22,80 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('HOME');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<Profile>(INITIAL_PROFILE);
+  
+  // States for Tools
   const [tools, setTools] = useState<AppTool[]>([]);
+  const [toolPage, setToolPage] = useState(1);
+  const [totalTools, setTotalTools] = useState(0);
+
+  // States for News
   const [news, setNews] = useState<News[]>([]);
+  const [newsPage, setNewsPage] = useState(1);
+  const [totalNews, setTotalNews] = useState(0);
 
-  const fetchData = async () => {
-    try {
-      const { data: profileData } = await supabase.from('profiles').select('*').single();
-      if (profileData) setProfile(profileData);
+  const [loading, setLoading] = useState(false);
 
-      const { data: toolsData } = await supabase.from('tools').select('*').order('created_at', { ascending: false });
-      if (toolsData) setTools(toolsData);
+  const fetchProfile = async () => {
+    const { data } = await supabase.from('profiles').select('*').single();
+    if (data) setProfile(data);
+  };
 
-      const { data: newsData } = await supabase.from('news').select('*').order('created_at', { ascending: false });
-      if (newsData) setNews(newsData);
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    }
+  const fetchTools = async (page: number) => {
+    const from = (page - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
+    const { data, count } = await supabase
+      .from('tools')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (data) setTools(data);
+    if (count !== null) setTotalTools(count);
+  };
+
+  const fetchNews = async (page: number) => {
+    const from = (page - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
+    const { data, count } = await supabase
+      .from('news')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (data) setNews(data);
+    if (count !== null) setTotalNews(count);
   };
 
   useEffect(() => {
-    fetchData();
+    fetchProfile();
   }, []);
+
+  useEffect(() => {
+    fetchTools(toolPage);
+  }, [toolPage]);
+
+  useEffect(() => {
+    fetchNews(newsPage);
+  }, [newsPage]);
 
   const navigateTo = (view: ViewType) => {
     setCurrentView(view);
     setIsSidebarOpen(false);
     window.scrollTo(0, 0);
+  };
+
+  const refreshAllData = async () => {
+    setLoading(true);
+    await Promise.all([
+      fetchProfile(),
+      fetchTools(1),
+      fetchNews(1)
+    ]);
+    setToolPage(1);
+    setNewsPage(1);
+    setLoading(false);
   };
 
   return (
@@ -62,12 +112,29 @@ const App: React.FC = () => {
         currentView={currentView}
       />
 
-      <main className="flex-grow pt-20 pb-12 px-4 max-w-4xl mx-auto w-full">
+      <main className={`flex-grow pt-20 pb-12 px-4 max-w-4xl mx-auto w-full transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
         {currentView === 'HOME' && (
-          <Home profile={profile} tools={tools} news={news} onNavigate={navigateTo} />
+          <Home 
+            profile={profile} 
+            tools={tools} 
+            news={news} 
+            onNavigate={navigateTo}
+            pagination={{
+              currentPage: toolPage,
+              totalPages: Math.ceil(totalTools / ITEMS_PER_PAGE),
+              onPageChange: (p) => { setToolPage(p); window.scrollTo({ top: 500, behavior: 'smooth' }); }
+            }}
+          />
         )}
         {currentView === 'NEWS_LIST' && (
-          <NewsList news={news} />
+          <NewsList 
+            news={news}
+            pagination={{
+              currentPage: newsPage,
+              totalPages: Math.ceil(totalNews / ITEMS_PER_PAGE),
+              onPageChange: (p) => { setNewsPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+            }}
+          />
         )}
         {currentView === 'PRIVACY' && (
           <Privacy />
@@ -80,7 +147,7 @@ const App: React.FC = () => {
             setTools={setTools}
             news={news} 
             setNews={setNews}
-            onBack={() => { navigateTo('HOME'); fetchData(); }}
+            onBack={() => { navigateTo('HOME'); refreshAllData(); }}
           />
         )}
       </main>
