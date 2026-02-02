@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Profile, AppTool, News } from '../types';
 import { supabase } from '../supabaseClient';
@@ -255,7 +256,8 @@ const Admin: React.FC<AdminProps> = ({ profile, setProfile, tools, setTools, new
                         <input type="file" accept="image/png" className="hidden" onChange={async (e) => {
                           const url = await uploadFile(e, 'mascot');
                           if (url) {
-                            setProfile(prev => ({...prev, mascot_url: url}));
+                            // Fix: Use direct object update to match the setProfile(p: Profile) => void type definition
+                            setProfile({...profile, mascot_url: url});
                             alert("Arquivo carregado com sucesso! Lembre-se de clicar em 'Salvar Perfil' abaixo.");
                           }
                         }} />

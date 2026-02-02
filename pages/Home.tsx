@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Profile, AppTool, News, ViewType } from '../types';
 import { supabase } from '../supabaseClient';
 import Pagination from '../components/Pagination';
@@ -18,11 +18,24 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate, pagination }) => {
   const latestNews = news.length > 0 ? news[0] : null;
   const hasMascot = profile.mascot_url && profile.mascot_url.trim().length > 0;
+  
+  // Estado local para feedback instantâneo do contador ao clicar
+  const [localClicks, setLocalClicks] = useState<Record<string, number>>({});
 
-  const handleToolClick = async (tool: AppTool, type: 'APK' | 'PWA') => {
+  const handleToolClick = async (tool: AppTool) => {
     try {
+      // Atualiza localmente para feedback imediato
+      setLocalClicks(prev => ({
+        ...prev,
+        [tool.id]: (localClicks[tool.id] || tool.click_count || 0) + 1
+      }));
+
+      // Chama a função no banco de dados
       const { error } = await supabase.rpc('increment_tool_clicks', { row_id: tool.id });
+      
       if (error) {
+        console.error('Erro na RPC:', error.message);
+        // Fallback caso a RPC falhe por falta de permissão direta na tabela
         await supabase
           .from('tools')
           .update({ click_count: (tool.click_count || 0) + 1 })
@@ -107,18 +120,45 @@ const Home: React.FC<HomeProps> = ({ profile, tools, news, onNavigate, paginatio
             </div>
           ) : (
             tools.map(tool => (
-              <div key={tool.id} className="glass-morphism rounded-3xl p-6 hover:border-white/20 transition-all group">
+              <div key={tool.id} className="glass-morphism rounded-3xl p-6 hover:border-white/20 transition-all group relative overflow-hidden">
+                {/* Badge de Acessos no topo do Card */}
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-emerald-400">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span className="text-[10px] font-bold text-emerald-400">
+                    {localClicks[tool.id] ?? tool.click_count ?? 0}
+                  </span>
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-6">
                   <img src={tool.icon_url} className="w-20 h-20 rounded-2xl shadow-lg bg-slate-800 p-1 shrink-0" alt={tool.title} />
                   <div className="flex-grow">
-                    <h3 className="text-xl font-bold group-hover:text-indigo-400 transition-colors mb-2">{tool.title}</h3>
+                    <h3 className="text-xl font-bold group-hover:text-indigo-400 transition-colors mb-2 pr-12">{tool.title}</h3>
                     <p className="text-slate-400 text-sm mb-6 leading-relaxed line-clamp-2">{tool.description}</p>
                     <div className="flex flex-wrap gap-3">
                       {tool.apk_url && (
-                        <a href={tool.apk_url} target="_blank" rel="noopener noreferrer" onClick={() => handleToolClick(tool, 'APK')} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">Baixar APK</a>
+                        <a 
+                          href={tool.apk_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          onClick={() => handleToolClick(tool)} 
+                          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+                        >
+                          Baixar APK
+                        </a>
                       )}
                       {tool.pwa_url && (
-                        <a href={tool.pwa_url} target="_blank" rel="noopener noreferrer" onClick={() => handleToolClick(tool, 'PWA')} className="px-5 py-2.5 glass-morphism border-white/10 rounded-xl text-sm font-bold transition-all">Abrir PWA</a>
+                        <a 
+                          href={tool.pwa_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          onClick={() => handleToolClick(tool)} 
+                          className="px-5 py-2.5 glass-morphism border-white/10 rounded-xl text-sm font-bold transition-all hover:bg-white/10 active:scale-95"
+                        >
+                          Abrir PWA
+                        </a>
                       )}
                     </div>
                   </div>
