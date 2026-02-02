@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ViewType, Profile, AppTool, News } from './types';
 import Header from './components/Header';
@@ -68,6 +69,25 @@ const App: React.FC = () => {
     if (count !== null) setTotalNews(count);
   };
 
+  // Lógica para interceptar o botão de voltar do Android/Navegador
+  useEffect(() => {
+    // Definimos o estado inicial no histórico para a HOME
+    window.history.replaceState({ view: 'HOME' }, '');
+
+    const handlePopState = (event: PopStateEvent) => {
+      // Se houver um estado definido no histórico, navegamos para ele
+      if (event.state && event.state.view) {
+        setCurrentView(event.state.view);
+      } else {
+        // Fallback caso o usuário volte além do estado inicial
+        setCurrentView('HOME');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -81,7 +101,11 @@ const App: React.FC = () => {
   }, [newsPage]);
 
   const navigateTo = (view: ViewType) => {
-    setCurrentView(view);
+    if (view !== currentView) {
+      // Toda vez que mudamos de tela manualmente, injetamos no histórico
+      window.history.pushState({ view: view }, '');
+      setCurrentView(view);
+    }
     setIsSidebarOpen(false);
     window.scrollTo(0, 0);
   };
@@ -147,7 +171,11 @@ const App: React.FC = () => {
             setTools={setTools}
             news={news} 
             setNews={setNews}
-            onBack={() => { navigateTo('HOME'); refreshAllData(); }}
+            onBack={() => { 
+              // Ao clicar em voltar no Admin, limpamos o histórico para não entrar em loop
+              navigateTo('HOME'); 
+              refreshAllData(); 
+            }}
           />
         )}
       </main>
